@@ -8,7 +8,7 @@ import { HydrationScript } from '@solidjs/web';
 // back to the plugin's built-in shell.
 export default function Document(props: ParentProps) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="abyss">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
