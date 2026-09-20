@@ -96,7 +96,7 @@ export default function App() {
         {(routine) => (
           <>
             <article
-              class="card bg-base-200 shadow border border-base-300 card-sm cursor-pointer hover:bg-base-100"
+              class="card bg-base-200 shadow border border-base-300 card-sm cursor-pointer hover:bg-base-100 overflow-hidden"
               style={{ "anchor-name": `--anchor-${routine.id}` }}
               onClick={() =>
                 document
@@ -120,12 +120,12 @@ export default function App() {
                   e.stopPropagation();
                   logSet(routine.id);
                 }}
-                class="btn btn-primary w-full"
+                class="btn btn-primary w-full rounded-t-none"
               >
                 LOG SET
               </button>
             </article>
-            <ul class="dropdown bg-base-100 shadow menu dropdown-end w-52"  popover id={`popover-${routine.id}`} style={{ "position-anchor": `--anchor-${routine.id}` }}>
+            <ul class="dropdown bg-base-200 shadow menu dropdown-end w-52"  popover id={`popover-${routine.id}`} style={{ "position-anchor": `--anchor-${routine.id}` }}>
               <li><button onClick={() => updateRoutine(routine)}>Edit</button></li>
               <li><button onClick={() => removeRoutine(routine.id)}>Delete</button></li>
             </ul>
