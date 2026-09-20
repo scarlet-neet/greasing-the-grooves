@@ -12,7 +12,10 @@ export default function Document(props: ParentProps) {
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#4d0218" />
         <link rel="icon" href="/scarlet-neet-icon.svg" />
+        <link rel="apple-touch-icon" href="/scarlet-neet-icon-192.png" />
+        <link rel="manifest" href="/manifest.webmanifest" />
         <title>GTG Routine</title>
         <HydrationScript />
       </head>
