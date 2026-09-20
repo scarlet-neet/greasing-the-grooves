@@ -112,7 +112,7 @@ export default function App() {
                   <p style={{ margin: "0" }}>
                     Achieved : {routine.achieved} Sets
                   </p>
-                  <p style={{ margin: "0" }}>Go al : {routine.goal} Sets</p>
+                  <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
                 </div>
               </div>
               <button
