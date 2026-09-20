@@ -113,6 +113,7 @@ export default function App() {
                     Achieved : {routine.achieved} Sets
                   </p>
                   <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
+                  <progress class="progress progress-secondary h-1" value={routine.achieved / routine.goal * 100} max="100" />
                 </div>
               </div>
               <button
