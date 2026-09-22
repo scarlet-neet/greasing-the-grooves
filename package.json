@@ -12,6 +12,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.2",
     "@netlify/vite-plugin": "^3.0.1",
     "@solidjs/diagnostics": "^2.0.0-rc.9",
