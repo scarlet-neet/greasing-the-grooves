@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GTG Scarlet NEET</string>
+    <string name="title_activity_main">GTG Scarlet NEET</string>
+    <string name="package_name">com.scarletneet.app</string>
+    <string name="custom_url_scheme">com.scarletneet.app</string>
+</resources>
