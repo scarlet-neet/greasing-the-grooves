@@ -179,6 +179,7 @@ export default function App() {
             </svg>
           </button>
         </div>
+        <h2 class="text-xl font-bold">MAINTAIN <span class="badge badge-neutral ms-4 badge-sm align-middle">ONCE PER DAY</span></h2>
       </main>
       <div>
         <dialog ref={newRoutineRef} class="modal">
