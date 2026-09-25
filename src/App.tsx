@@ -86,6 +86,8 @@ export default function App() {
     newRoutineRef.showModal();
   };
 
+  let goalSetMetDialog!: HTMLDialogElement
+
   return (
     <>
       <main class="p-4 flex flex-col gap-4">
@@ -180,6 +182,7 @@ export default function App() {
           </button>
         </div>
         <h2 class="text-xl font-bold">MAINTAIN <span class="badge badge-neutral ms-4 badge-sm align-middle">ONCE PER DAY</span></h2>
+        <button class="btn" onClick={() => goalSetMetDialog.showModal()}>Open Alert</button>
       </main>
       <div>
         <dialog ref={newRoutineRef} class="modal">
@@ -244,6 +247,17 @@ export default function App() {
               </footer>
             </form>
           </article>
+        </dialog>
+        <dialog ref={goalSetMetDialog} class="modal">
+          <div class="modal-box">
+            <span class="icon-[ph--check-circle-duotone] text-success size-20 block mx-auto" />
+            <p class="text-xl font-bold text-center mt-2">Goal Reached</p>
+            <p class="text-center text-current/70 text-sm mt-2">Pull up hit $#200 out of $#200 sets. It moved to Maintain · now it only needs one set a day to keep the groove.</p>
+            <div class="modal-action justify-center">
+              <button class="btn btn-secondary" onClick={() => goalSetMetDialog.close()}>Keep In Routine</button>
+              <button class="btn btn-primary">Got It</button>
+            </div>
+          </div>
         </dialog>
       </div>
     </>
