@@ -1,4 +1,12 @@
-import { createMemo, createProjection, createSignal, createStore, For, refresh, Show } from "solid-js";
+import {
+  createMemo,
+  createProjection,
+  createSignal,
+  createStore,
+  For,
+  refresh,
+  Show,
+} from "solid-js";
 import "./App.css";
 import { db, Routine } from "./db";
 
@@ -68,8 +76,10 @@ export default function App() {
     formRef.reset();
     const inputs = formRef.elements;
     (inputs.namedItem("name") as HTMLInputElement).value = routine.name;
-    (inputs.namedItem("goal-sets") as HTMLInputElement).value = routine.goal.toString();
-    (inputs.namedItem("achieved-sets") as HTMLInputElement).value = routine.achieved.toString();
+    (inputs.namedItem("goal-sets") as HTMLInputElement).value =
+      routine.goal.toString();
+    (inputs.namedItem("achieved-sets") as HTMLInputElement).value =
+      routine.achieved.toString();
     (inputs.namedItem("update-id") as HTMLInputElement).value = routine.id;
 
     setUpdating(true);
@@ -77,146 +87,164 @@ export default function App() {
   };
 
   return (
-    <main class="p-4 flex flex-col gap-4">
-      <h1 class="text-xl font-bold">YOUR ROUTINE</h1>
-      <For
-        each={routines()}
-        fallback={
-          <>
-            <article class="card bg-base-100 shadow border border-base-300">
-              <div class="card-body">
-                <header style={{ margin: "0" }}>
-                  <p class="text-center">You Currently Have No Routines</p>
-                </header>
-              </div>
-            </article>
-          </>
-        }
-      >
-        {(routine) => (
-          <>
-            <article
-              class="card bg-base-200 shadow border border-base-300 card-sm cursor-pointer hover:bg-base-100 overflow-hidden"
-              style={{ "anchor-name": `--anchor-${routine.id}` }}
-              onClick={() =>
-                document
-                  .getElementById(`popover-${routine.id}`)
-                  ?.showPopover()
-              }
-            >
-              <div class="card-body flex-row p-0">
-                <h2 class="grow p-(--card-p,1.5rem) font-bold">
-                  {routine.name}
-                </h2>
-                <div class="bg-base-300 grow  p-(--card-p,1.5rem)">
-                  <p style={{ margin: "0" }}>
-                    Achieved : {routine.achieved} Sets
-                  </p>
-                  <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
-                  <progress class="progress progress-secondary h-1" value={routine.achieved / routine.goal * 100} max="100" />
+    <>
+      <main class="p-4 flex flex-col gap-4">
+        <h1 class="text-xl font-bold">YOUR ROUTINE</h1>
+        <For
+          each={routines()}
+          fallback={
+            <>
+              <article class="card bg-base-100 shadow border border-base-300">
+                <div class="card-body">
+                  <header style={{ margin: "0" }}>
+                    <p class="text-center">You Currently Have No Routines</p>
+                  </header>
                 </div>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  logSet(routine.id);
-                }}
-                class="btn btn-primary w-full rounded-t-none"
-              >
-                LOG SET
-              </button>
-            </article>
-            <ul class="dropdown bg-base-200 shadow menu dropdown-end w-52"  popover id={`popover-${routine.id}`} style={{ "position-anchor": `--anchor-${routine.id}` }}>
-              <li><button onClick={() => updateRoutine(routine)}>Edit</button></li>
-              <li><button onClick={() => removeRoutine(routine.id)}>Delete</button></li>
-            </ul>
-          </>
-        )}
-      </For>
-      <div class="fab">
-        <button
-          class="btn btn-primary btn-circle"
-          onClick={() => {
-            formRef.reset();
-            setUpdating(false);
-            newRoutineRef.showModal()
-          }}
+              </article>
+            </>
+          }
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="32"
-            height="32"
-            fill="currentColor"
-            viewBox="0 0 256 256"
+          {(routine) => (
+            <>
+              <article
+                class="card bg-base-200 shadow border border-base-300 card-sm cursor-pointer hover:bg-base-100 overflow-hidden"
+                style={{ "anchor-name": `--anchor-${routine.id}` }}
+                onClick={() =>
+                  document
+                    .getElementById(`popover-${routine.id}`)
+                    ?.showPopover()
+                }
+              >
+                <div class="card-body flex-row p-0">
+                  <h2 class="grow p-(--card-p,1.5rem) font-bold">
+                    {routine.name}
+                  </h2>
+                  <div class="bg-base-300 grow  p-(--card-p,1.5rem)">
+                    <p style={{ margin: "0" }}>
+                      Achieved : {routine.achieved} Sets
+                    </p>
+                    <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
+                    <progress
+                      class="progress progress-secondary h-1"
+                      value={(routine.achieved / routine.goal) * 100}
+                      max="100"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    logSet(routine.id);
+                  }}
+                  class="btn btn-primary w-full rounded-t-none"
+                >
+                  LOG SET
+                </button>
+              </article>
+              <ul
+                class="dropdown bg-base-200 shadow menu dropdown-end w-52"
+                popover
+                id={`popover-${routine.id}`}
+                style={{ "position-anchor": `--anchor-${routine.id}` }}
+              >
+                <li>
+                  <button onClick={() => updateRoutine(routine)}>Edit</button>
+                </li>
+                <li>
+                  <button onClick={() => removeRoutine(routine.id)}>
+                    Delete
+                  </button>
+                </li>
+              </ul>
+            </>
+          )}
+        </For>
+        <div class="fab">
+          <button
+            class="btn btn-primary btn-circle"
+            onClick={() => {
+              formRef.reset();
+              setUpdating(false);
+              newRoutineRef.showModal();
+            }}
           >
-            <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
-          </svg>
-        </button>
-      </div>
-      <dialog ref={newRoutineRef} class="modal">
-        <article class="modal-box">
-          <header class="mb-6">
-            <a
-              style={{ cursor: "pointer" }}
-              aria-label="Close"
-              rel="prev"
-              onClick={() => newRoutineRef.close()}
-            ></a>
-            <p>
-              <strong>Add New Workout Routine</strong>
-            </p>
-          </header>
-          <form
-            ref={formRef}
-            onSubmit={handleSubmit}
-            class="flex flex-col gap-4"
-          >
-            <input type="hidden" name="update-id" />
-            <input
-              type="text"
-              name="name"
-              placeholder="Routine Name"
-              aria-label="Routine Name"
-              required
-              aria-invalid={validation.name !== "" ? "true" : "false"}
-              class="input"
-            />
-            <input
-              type="number"
-              name="achieved-sets"
-              placeholder="Achieved Sets"
-              aria-label="Achieved Sets"
-              class="input"
-            />
-            <input
-              type="number"
-              name="goal-sets"
-              placeholder="Goal Sets"
-              aria-label="Goal Sets"
-              min="1"
-              required
-              aria-invalid={validation.goal !== "" ? "true" : "false"}
-              class="input"
-            />
-            <Show when={validation.goal}>{(text) => <p class="text-sm text-error">{text()}</p>}</Show>
-            <footer class="modal-action">
-              <button
-                type="button"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="32"
+              height="32"
+              fill="currentColor"
+              viewBox="0 0 256 256"
+            >
+              <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+            </svg>
+          </button>
+        </div>
+      </main>
+      <div>
+        <dialog ref={newRoutineRef} class="modal">
+          <article class="modal-box">
+            <header class="mb-6">
+              <a
+                style={{ cursor: "pointer" }}
+                aria-label="Close"
+                rel="prev"
                 onClick={() => newRoutineRef.close()}
-                class="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                class="btn btn-primary"
-              >
-                Confirm
-              </button>
-            </footer>
-          </form>
-        </article>
-      </dialog>
-    </main>
+              ></a>
+              <p>
+                <strong>Add New Workout Routine</strong>
+              </p>
+            </header>
+            <form
+              ref={formRef}
+              onSubmit={handleSubmit}
+              class="flex flex-col gap-4"
+            >
+              <input type="hidden" name="update-id" />
+              <input
+                type="text"
+                name="name"
+                placeholder="Routine Name"
+                aria-label="Routine Name"
+                required
+                aria-invalid={validation.name !== "" ? "true" : "false"}
+                class="input"
+              />
+              <input
+                type="number"
+                name="achieved-sets"
+                placeholder="Achieved Sets"
+                aria-label="Achieved Sets"
+                class="input"
+              />
+              <input
+                type="number"
+                name="goal-sets"
+                placeholder="Goal Sets"
+                aria-label="Goal Sets"
+                min="1"
+                required
+                aria-invalid={validation.goal !== "" ? "true" : "false"}
+                class="input"
+              />
+              <Show when={validation.goal}>
+                {(text) => <p class="text-sm text-error">{text()}</p>}
+              </Show>
+              <footer class="modal-action">
+                <button
+                  type="button"
+                  onClick={() => newRoutineRef.close()}
+                  class="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  Confirm
+                </button>
+              </footer>
+            </form>
+          </article>
+        </dialog>
+      </div>
+    </>
   );
 }
