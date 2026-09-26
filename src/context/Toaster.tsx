@@ -7,15 +7,25 @@ const ICONS = {
   warning: "icon-[ph--warning]"
 }
 
+const ALERT_CLASS = {
+  success: "alert-success",
+  error: "alert-error",
+  warning: "alert-warning"
+}
+
+const STATUS = ["success", "error", "warning"] as const
+
+type Status = typeof STATUS[number]
+
 export const Toaster: Component = () => {
 
-  const [alerts, setAlerts] = createStore<{ id: string, message: string }[]>([])
+  const [alerts, setAlerts] = createStore<{ id: string, message: string, status: Status }[]>([])
   let toast!: HTMLDivElement
 
-  const confirm = (message: string, duration = 3000) => {
+  const notify = (message: string, status: Status = "success",  duration = 3000) => {
     const id = crypto.randomUUID()
     setAlerts((draft) => {
-      draft.push({ id, message })
+      draft.push({ id, message, status })
     });
 
     const remove = () => setAlerts(draft => draft.filter(d => d.id !== id));
@@ -34,20 +44,15 @@ export const Toaster: Component = () => {
 
   return (
     <>
-    <button class="btn btn-primary" onClick={() => confirm("is it working?")}>Try</button>
     <div class="toast toast-bottom toast-center" ref={toast}>
       <For each={alerts}>
         {(alert) => (
-          <div data-toastid={alert.id} class="alert alert-success" role="alert">
-            <span class="icon-[ph--check-fat-fill]" />
+          <div data-toastid={alert.id} class={["alert", ALERT_CLASS[alert.status]]} role="alert">
+            <span class={[ICONS[alert.status], "size-5"]} />
             <span>{alert.message}</span>
           </div>
         )}
         </For>
-        <div class="alert alert-success" role="alert">
-          <span class="icon-[ph--check-fat-fill]" />
-          <span>Message is here</span>
-        </div>
       </div>
     </>
   )
