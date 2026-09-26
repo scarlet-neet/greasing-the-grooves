@@ -68,3 +68,13 @@ export const routines = {
 export const db = {
   routines: routines,
 };
+
+export const doneMaintainRoutine = (routine: Routine) => {
+  routines.update(routine.id, (draft) => {
+    draft.achieved += 1;
+    draft.lastSet = new Date().toISOString().slice(0, 19);
+    return draft
+  })
+
+  return { status: "success", message: `${routine.name} maintain is done for today, back tomorrow.` }
+}

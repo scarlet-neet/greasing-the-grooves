@@ -9,7 +9,7 @@ import {
 } from "solid-js";
 import * as v from "valibot";
 import "./App.css";
-import { db, type Routine } from "./db";
+import { db, doneMaintainRoutine, type Routine } from "./db";
 
 // Field names match the `name` attributes of the routine form inputs.
 const RoutineFormSchema = v.object({
@@ -324,7 +324,8 @@ export default function App() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          void logSet(routine);
+                          void doneMaintainRoutine(routine);
+                          refresh(routines)
                         }}
                         disabled={doneToday()}
                         class="btn btn-success w-full rounded-t-none"
