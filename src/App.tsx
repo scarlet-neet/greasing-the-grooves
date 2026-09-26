@@ -329,7 +329,7 @@ export default function App() {
                         disabled={doneToday()}
                         class="btn btn-success w-full rounded-t-none"
                       >
-                        DONE TODAY
+                        {doneToday() ? "✓ " : ""}DONE TODAY
                       </button>
                     </article>
                     <ul
