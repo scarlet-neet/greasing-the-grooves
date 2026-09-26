@@ -1,13 +1,5 @@
 import * as v from "valibot";
 
-export interface Routine {
-  id: string;
-  name: string;
-  achieved: number;
-  goal: number;
-  state: "active" | "maintain"
-}
-
 const RoutineSchema = v.object({
   id: v.pipe(v.string(), v.nonEmpty()),
   name: v.fallback(v.pipe(v.string(), v.nonEmpty()), "No Name"),
@@ -15,6 +7,10 @@ const RoutineSchema = v.object({
   goal: v.fallback(v.pipe(v.number(), v.integer(), v.minValue(1)), 100),
   state: v.fallback(v.picklist(["active", "maintain"]), "active")
 })
+
+// The schema is the single source of truth for the shape of a routine.
+export type Routine = v.InferOutput<typeof RoutineSchema>;
+
 const parseRoutines = (raw: unknown): Routine[] => v.parse(v.fallback(v.array(v.unknown()), []), raw).flatMap((item) => {
   const result = v.safeParse(RoutineSchema, item);
   if (!result.success && import.meta.env.DEV) {
@@ -42,24 +38,19 @@ export const routines = {
   getAll: () => parseRoutines(read("routines")),
   store: (value: Routine) => {
     const safe = v.safeParse(RoutineSchema, value)
+    if (!safe.success) return false;
 
-    const stored = routines.getAll();
-    set("routines", [...(stored ?? []), safe.output]);
+    set("routines", [...routines.getAll(), safe.output]);
     return true;
   },
-  update: (id: string, callback: (r: Routine) => Routine) => {
-    const stored = routines.getAll();
-    if (!stored) return false;
-
-    const updated = parseRoutines(stored.map(r => r.id === id ? callback(r) : r));
+  /** Returns the updated routine, or `undefined` if it was not found or failed validation. */
+  update: (id: string, callback: (r: Routine) => Routine): Routine | undefined => {
+    const updated = parseRoutines(routines.getAll().map(r => r.id === id ? callback(r) : r));
     set("routines", updated);
-    return true;
+    return updated.find(r => r.id === id);
   },
   delete: (id: string) => {
-    const stored = routines.getAll();
-    if (!stored) return false;
-    const updated = stored.filter(r => r.id !== id);
-    set("routines", updated);
+    set("routines", routines.getAll().filter(r => r.id !== id));
     return true;
   },
 

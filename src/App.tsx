@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createProjection,
   createSignal,
@@ -8,8 +7,27 @@ import {
   refresh,
   Show,
 } from "solid-js";
+import * as v from "valibot";
 import "./App.css";
-import { db, Routine } from "./db";
+import { db, type Routine } from "./db";
+
+// Field names match the `name` attributes of the routine form inputs.
+const RoutineFormSchema = v.object({
+  "update-id": v.string(),
+  name: v.pipe(v.string(), v.trim(), v.nonEmpty("Routine name is required")),
+  "achieved-sets": v.pipe(
+    v.string(),
+    v.toNumber("Achieved sets must be a number"),
+    v.integer("Achieved sets must be a whole number"),
+    v.minValue(0, "Achieved sets cannot be negative"),
+  ),
+  "goal-sets": v.pipe(
+    v.string(),
+    v.toNumber("Goal must be a number"),
+    v.integer("Goal must be a whole number"),
+    v.minValue(1, "Goal must be a positive number"),
+  ),
+});
 
 export default function App() {
   const routines = createMemo(() => db.routines.getAll());
@@ -17,36 +35,39 @@ export default function App() {
   let newRoutineRef!: HTMLDialogElement;
   let formRef!: HTMLFormElement;
 
-  const [validation, setValidation] = createStore({ name: "", goal: "" });
+  const [validation, setValidation] = createStore({
+    name: "",
+    achieved: "",
+    goal: "",
+  });
   const [updating, setUpdating] = createSignal(false);
 
   const handleRoutineFormSubmit = (e: Event) => {
     e.preventDefault();
-    const formData = new FormData(formRef);
-    const name = (formData.get("name") as string).trim();
-    const achieved = Number(formData.get("achieved-sets") as string) ?? 0;
-    const goal = Number(formData.get("goal-sets") as string) ?? 0;
+    const result = v.safeParse(
+      RoutineFormSchema,
+      Object.fromEntries(new FormData(formRef)),
+    );
+    const errors = result.success
+      ? undefined
+      : v.flatten<typeof RoutineFormSchema>(result.issues).nested;
 
-    let invalide = false;
-    if (!name) {
-      setValidation((d) => {
-        d.name = "Routine name is required";
-        return d;
-      });
-      invalide = true;
-    }
-    if (goal <= 0) {
-      setValidation((d) => {
-        d.goal = "Goal must be a positive number";
-        return d;
-      });
-      invalide = true;
-    }
+    setValidation((d) => {
+      d.name = errors?.name?.[0] ?? "";
+      d.achieved = errors?.["achieved-sets"]?.[0] ?? "";
+      d.goal = errors?.["goal-sets"]?.[0] ?? "";
+      return d;
+    });
 
-    if (invalide) return;
+    if (!result.success) return;
+    const {
+      "update-id": updateId,
+      name,
+      "achieved-sets": achieved,
+      "goal-sets": goal,
+    } = result.output;
 
     if (updating()) {
-      const updateId = (formData.get("update-id") as string) ?? "";
       db.routines.update(updateId, (r) => {
         r.name = name;
         r.achieved = achieved;
@@ -65,52 +86,52 @@ export default function App() {
     }
     formRef.reset();
     newRoutineRef.close();
-    refresh(routines);
+    void refresh(routines);
   };
 
   let confirmPromise: ((confirmed: boolean) => void) | undefined;
   const logSet = async (routine: Routine) => {
-    let goalReached = false;
-    db.routines.update(routine.id, (r) => {
+    const updated = db.routines.update(routine.id, (r) => {
       r.achieved += 1;
-      if (r.achieved >= r.goal) goalReached = true;
       return r;
     });
 
-    refresh(routines);
+    void refresh(routines);
 
-    if (goalReached) {
-      const { promise, resolve } = Promise.withResolvers<boolean>();
-      confirmPromise = resolve;
-      setGoalSetMetId(routine.id);
-      goalSetMetDialog.showModal();
+    if (updated === undefined || updated.achieved < updated.goal) return;
 
-      const confirmed = await promise;
-      confirmPromise = undefined;
-      if (!confirmed) return;
+    const { promise, resolve } = Promise.withResolvers<boolean>();
+    confirmPromise = resolve;
+    setGoalSetMetId(routine.id);
+    goalSetMetDialog.showModal();
 
-      db.routines.update(routine.id, (r) => {
-        r.state = "maintain";
-        return r;
-      });
-    }
+    const confirmed = await promise;
+    confirmPromise = undefined;
+    if (!confirmed) return;
 
-    refresh(routines);
+    db.routines.update(routine.id, (r) => {
+      r.state = "maintain";
+      return r;
+    });
+
+    void refresh(routines);
   };
   const removeRoutine = (id: string) => {
     db.routines.delete(id);
-    refresh(routines);
+    void refresh(routines);
+  };
+
+  const setFormInput = (name: string, value: string) => {
+    const input = formRef.elements.namedItem(name);
+    if (input instanceof HTMLInputElement) input.value = value;
   };
 
   const updateRoutine = (routine: Routine) => {
     formRef.reset();
-    const inputs = formRef.elements;
-    (inputs.namedItem("name") as HTMLInputElement).value = routine.name;
-    (inputs.namedItem("goal-sets") as HTMLInputElement).value =
-      routine.goal.toString();
-    (inputs.namedItem("achieved-sets") as HTMLInputElement).value =
-      routine.achieved.toString();
-    (inputs.namedItem("update-id") as HTMLInputElement).value = routine.id;
+    setFormInput("name", routine.name);
+    setFormInput("goal-sets", routine.goal.toString());
+    setFormInput("achieved-sets", routine.achieved.toString());
+    setFormInput("update-id", routine.id);
 
     setUpdating(true);
     newRoutineRef.showModal();
@@ -178,7 +199,7 @@ export default function App() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    logSet(routine);
+                    void logSet(routine);
                   }}
                   class="btn btn-primary w-full rounded-t-none"
                 >
@@ -189,6 +210,7 @@ export default function App() {
                 class="dropdown bg-base-200 shadow menu dropdown-end w-52"
                 popover
                 id={`popover-${routine.id}`}
+                // oxlint-disable-next-line solid/style-prop
                 style={{ "position-anchor": `--anchor-${routine.id}` }}
               >
                 <li>
@@ -219,7 +241,7 @@ export default function App() {
               fill="currentColor"
               viewBox="0 0 256 256"
             >
-              <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+              <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
             </svg>
           </button>
         </div>
@@ -262,7 +284,7 @@ export default function App() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        logSet(routine);
+                        void logSet(routine);
                       }}
                       class="btn btn-success w-full rounded-t-none"
                     >
@@ -273,6 +295,7 @@ export default function App() {
                     class="dropdown bg-base-200 shadow menu dropdown-end w-52"
                     popover
                     id={`popover-${routine.id}`}
+                    // oxlint-disable-next-line
                     style={{ "position-anchor": `--anchor-${routine.id}` }}
                   >
                     <li>
@@ -299,7 +322,7 @@ export default function App() {
                 aria-label="Close"
                 rel="prev"
                 onClick={() => newRoutineRef.close()}
-              ></a>
+                />
               <p>
                 <strong>Add New Workout Routine</strong>
               </p>
@@ -324,8 +347,13 @@ export default function App() {
                 name="achieved-sets"
                 placeholder="Achieved Sets"
                 aria-label="Achieved Sets"
+                min="0"
+                aria-invalid={validation.achieved !== "" ? "true" : "false"}
                 class="input"
               />
+              <Show when={validation.achieved}>
+                {(text) => <p class="text-sm text-error">{text()}</p>}
+              </Show>
               <input
                 type="number"
                 name="goal-sets"
