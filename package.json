@@ -6,20 +6,24 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build",
+    "build": "pnpm check && vite build",
     "serve": "vite preview",
-    "lint": "oxlint src"
+    "lint": "oxlint src",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm typecheck && pnpm lint"
   },
   "license": "MIT",
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.2",
-    "@netlify/vite-plugin": "^3.0.1",
+    "@iconify-json/ph": "^1.2.2",
+    "@iconify/tailwind4": "^1.2.3",
     "@solidjs/diagnostics": "^2.0.0-rc.9",
     "@solidjs/start-devtools": "^1.0.0-next.4",
     "@solidjs/vite-plugin": "^3.0.0-next.44",
     "eslint-plugin-solid": "~0.18.0",
     "oxlint": "~1.79.0",
+    "oxlint-tsgolint": "^7.0.2003",
     "typescript": "^5.9.2",
     "vite": "^8.1.5"
   },
@@ -33,6 +37,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "daisyui": "^5.7.42",
     "solid-js": "^2.0.0-rc.9",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "valibot": "^1.5.0"
   }
 }
