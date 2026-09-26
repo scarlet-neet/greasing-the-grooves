@@ -5,7 +5,8 @@ const RoutineSchema = v.object({
   name: v.fallback(v.pipe(v.string(), v.nonEmpty()), "No Name"),
   achieved: v.fallback(v.pipe(v.number(), v.integer(), v.minValue(0)), 0),
   goal: v.fallback(v.pipe(v.number(), v.integer(), v.minValue(1)), 100),
-  state: v.fallback(v.picklist(["active", "maintain"]), "active")
+  state: v.fallback(v.picklist(["active", "maintain"]), "active"),
+  lastSet: v.nullish(v.pipe(v.string(), v.isoDate()), undefined)
 })
 
 // The schema is the single source of truth for the shape of a routine.
