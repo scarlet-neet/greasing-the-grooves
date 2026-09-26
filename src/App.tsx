@@ -400,11 +400,6 @@ const MaintainRoutine: Component<{
               Achieved : {props.routine.achieved} Sets
             </p>
             <p style={{ margin: "0" }}>Goal : {props.routine.goal} Sets</p>
-            <progress
-              class="progress progress-secondary h-1"
-              value={(props.routine.achieved / props.routine.goal) * 100}
-              max="100"
-            />
             <p class="text-xs text-current/70 mt-4">{lastDone()}</p>
           </div>
         </div>
