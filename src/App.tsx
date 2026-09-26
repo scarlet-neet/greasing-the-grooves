@@ -156,11 +156,11 @@ export default function App() {
                     ?.showPopover()
                 }
               >
-                <div class="card-body flex-row p-0">
+                <div class="card-body flex-row p-0 divide-x divide-base-300">
                   <h2 class="grow p-(--card-p,1.5rem) font-bold">
                     {routine.name}
                   </h2>
-                  <div class="bg-base-300 grow  p-(--card-p,1.5rem)">
+                  <div class="grow  p-(--card-p,1.5rem)">
                     <p style={{ margin: "0" }}>
                       Achieved : {routine.achieved} Sets
                     </p>
