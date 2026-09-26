@@ -4,13 +4,14 @@ import {
   createSignal,
   createStore,
   For,
+  onSettled,
   refresh,
   Show,
 } from "solid-js";
 import * as v from "valibot";
 import "./App.css";
 import { db, doneMaintainRoutine, type Routine } from "./db";
-import { Toaster } from "./context/Toaster";
+import { notify, Toaster } from "./context/Toaster";
 
 // Field names match the `name` attributes of the routine form inputs.
 const RoutineFormSchema = v.object({
