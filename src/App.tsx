@@ -117,7 +117,7 @@ export default function App() {
   const logSet = async (routine: Routine) => {
     const updated = db.routines.update(routine.id, (r) => {
       r.achieved += 1;
-      r.lastSet = toIsoDate(new Date())
+      r.lastSet = new Date().toISOString().slice(0,19)
       return r;
     });
 
