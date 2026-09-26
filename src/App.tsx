@@ -238,7 +238,7 @@ export default function App() {
               {(routine) => (
                 <MaintainRoutine
                   routine={routine}
-                  refresh={() => refresh(routines)}
+                  refresh={() => void refresh(routines)}
                   onUpdateClick={() => updateRoutine(routine)}
                   onDeleteClick={() => removeRoutine(routine.id)}
                 />
@@ -359,15 +359,16 @@ const MaintainRoutine: Component<{
   onUpdateClick: () => void;
   onDeleteClick: () => void;
 }> = (props) => {
+
   const doneToday = (): boolean => {
-    if (!props.routine.lastSet) return false;
+    if (props.routine.lastSet === undefined) return false;
     return (
       props.routine.lastSet.slice(0, 10) ===
       new Date().toISOString().slice(0, 10)
     );
   };
   const lastDone = (): string => {
-    if (!props.routine.lastSet) return "";
+    if (props.routine.lastSet === undefined) return "";
     const difference = daysBetweenDate(
       new Date(props.routine.lastSet),
       new Date(),

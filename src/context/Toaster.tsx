@@ -59,19 +59,19 @@ export const Toaster: Component = () => {
 const ToastItem: Component<{ alert: Alert }> = (props) => {
   let el!: HTMLDivElement
 
-  createEffect(() => props.alert.leaving, (leaving) => {
-    if (!leaving) return;
+  createEffect(() => ({leaving : props.alert.leaving, id: props.alert.id}), ({leaving, id}) => {
+    if (leaving !== true) return;
 
-    Promise.allSettled(el.getAnimations().map(a => a.finished)).then(() => remove(props.alert.id))
+    void Promise.allSettled(el.getAnimations().map(a => a.finished)).then(() => remove(id))
   })
 
   return (
     <div
       ref={el}
       data-toastid={props.alert.id}
-      class={["alert", ALERT_CLASS[props.alert.status] , { "animate-toast-end": !!props.alert.leaving }]}
+      class={["alert", ALERT_CLASS[props.alert.status] , { "animate-toast-end": props.alert.leaving === true }]}
       role={props.alert.status === "error" ? "alert" : "status"}
-      onAnimationEnd={(e) => e.target === e.currentTarget && props.alert.leaving && remove(props.alert.id)}
+      onAnimationEnd={(e) => e.target === e.currentTarget && props.alert.leaving === true && remove(props.alert.id)}
     >
       <span class={[ICONS[props.alert.status], "size-5"]} />
       <span>{props.alert.message}</span>
