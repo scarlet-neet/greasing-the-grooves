@@ -327,8 +327,9 @@ export default function App() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          void doneMaintainRoutine(routine);
-                          refresh(routines)
+                          const result = doneMaintainRoutine(routine);
+                          notify(result.message);
+                          refresh(routines);
                         }}
                         disabled={doneToday()}
                         class="btn btn-success w-full rounded-t-none"
