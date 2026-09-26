@@ -10,6 +10,7 @@ import {
 import * as v from "valibot";
 import "./App.css";
 import { db, type Routine } from "./db";
+import { toIsoDate } from "./lib/format";
 
 // Field names match the `name` attributes of the routine form inputs.
 const RoutineFormSchema = v.object({
@@ -93,6 +94,7 @@ export default function App() {
   const logSet = async (routine: Routine) => {
     const updated = db.routines.update(routine.id, (r) => {
       r.achieved += 1;
+      r.lastSet = toIsoDate(new Date())
       return r;
     });
 
