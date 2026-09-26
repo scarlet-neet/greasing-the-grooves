@@ -55,39 +55,48 @@ export default function App() {
       });
       setUpdating(false);
     } else {
-      db.routines.store({ name, achieved, goal, id: crypto.randomUUID(), state: "active" });
+      db.routines.store({
+        name,
+        achieved,
+        goal,
+        id: crypto.randomUUID(),
+        state: "active",
+      });
     }
     formRef.reset();
     newRoutineRef.close();
     refresh(routines);
   };
 
-  let confirmPromise: ((confirmed: boolean) => void) | undefined
+  let confirmPromise: ((confirmed: boolean) => void) | undefined;
   const logSet = async (routine: Routine) => {
-    const update = (toMaintain: boolean = false) => {
-      db.routines.update(routine.id, (r) => {
-        r.achieved += 1;
-        if (toMaintain) r.state = "maintain";
-        return r;
-      });
-      refresh(routines);
-    }
 
-    const goalReached = routine.achieved + 1 >= routine.goal
-    let toMaintain = false
+    let goalReached = false
+    db.routines.update(routine.id, (r) => {
+      r.achieved += 1;
+      if (r.achieved >= r.goal) goalReached = true
+      return r;
+    });
+
+    refresh(routines)
+
     if (goalReached) {
       const { promise, resolve } = Promise.withResolvers<boolean>();
-      confirmPromise = resolve
-      setGoalSetMetId(routine.id)
+      confirmPromise = resolve;
+      setGoalSetMetId(routine.id);
       goalSetMetDialog.showModal();
 
       const confirmed = await promise;
-      toMaintain = true
       confirmPromise = undefined;
       if (!confirmed) return;
+
+      db.routines.update(routine.id, r => {
+        r.state = 'maintain';
+        return r
+      })
     }
 
-    update(toMaintain);
+    refresh(routines);
   };
   const removeRoutine = (id: string) => {
     db.routines.delete(id);
@@ -108,11 +117,15 @@ export default function App() {
     newRoutineRef.showModal();
   };
 
-  let goalSetMetDialog!: HTMLDialogElement
-  const [goalSetMetId, setGoalSetMetId] = createSignal("")
-  const routineGoalMet = () => routines().find((routine) => routine.id === goalSetMetId())
+  let goalSetMetDialog!: HTMLDialogElement;
+  const [goalSetMetId, setGoalSetMetId] = createSignal("");
+  const routineGoalMet = () =>
+    routines().find((routine) => routine.id === goalSetMetId());
 
-  const activeRoutines = createProjection(() => routines().filter(routine => routine.state === 'active'), []);
+  const activeRoutines = createProjection(
+    () => routines().filter((routine) => routine.state === "active"),
+    [],
+  );
 
   return (
     <>
@@ -207,8 +220,15 @@ export default function App() {
             </svg>
           </button>
         </div>
-        <h2 class="text-xl font-bold">MAINTAIN <span class="badge badge-neutral ms-4 badge-sm align-middle">ONCE PER DAY</span></h2>
-        <button class="btn" onClick={() => goalSetMetDialog.showModal()}>Open Alert</button>
+        <h2 class="text-xl font-bold">
+          MAINTAIN{" "}
+          <span class="badge badge-neutral ms-4 badge-sm align-middle">
+            ONCE PER DAY
+          </span>
+        </h2>
+        <button class="btn" onClick={() => goalSetMetDialog.showModal()}>
+          Open Alert
+        </button>
       </main>
       <div>
         <dialog ref={newRoutineRef} class="modal">
@@ -274,17 +294,35 @@ export default function App() {
             </form>
           </article>
         </dialog>
-        <dialog ref={goalSetMetDialog} class="modal" onClose={() => confirmPromise?.(false)}>
+        <dialog
+          ref={goalSetMetDialog}
+          class="modal"
+          onClose={() => confirmPromise?.(false)}
+        >
           <div class="modal-box">
             <span class="icon-[ph--check-circle-duotone] text-success size-20 block mx-auto" />
             <p class="text-xl font-bold text-center mt-2">Goal Reached</p>
-            <p class="text-center text-current/70 text-sm mt-2">{routineGoalMet()?.name} hit {routineGoalMet()?.achieved} out of {routineGoalMet()?.goal} sets. It moved to Maintain · now it only needs one set a day to keep the groove.</p>
+            <p class="text-center text-current/70 text-sm mt-2">
+              {routineGoalMet()?.name} hit {routineGoalMet()?.achieved} out of{" "}
+              {routineGoalMet()?.goal} sets. It moved to Maintain · now it only
+              needs one set a day to keep the groove.
+            </p>
             <div class="modal-action justify-center">
-              <button class="btn btn-secondary" onClick={() => goalSetMetDialog.close()}>Keep In Routine</button>
-              <button class="btn btn-primary" onClick={() => {
-                confirmPromise?.(true);
-                goalSetMetDialog.close();
-              }}>Got It</button>
+              <button
+                class="btn btn-secondary"
+                onClick={() => goalSetMetDialog.close()}
+              >
+                Keep In Routine
+              </button>
+              <button
+                class="btn btn-primary"
+                onClick={() => {
+                  confirmPromise?.(true);
+                  goalSetMetDialog.close();
+                }}
+              >
+                Got It
+              </button>
             </div>
           </div>
         </dialog>
