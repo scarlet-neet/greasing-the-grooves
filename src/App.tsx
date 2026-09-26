@@ -4,14 +4,14 @@ import {
   createSignal,
   createStore,
   For,
-  onSettled,
   refresh,
   Show,
+  type Component
 } from "solid-js";
 import * as v from "valibot";
 import "./App.css";
-import { db, doneMaintainRoutine, type Routine } from "./db";
 import { notify, Toaster } from "./context/Toaster";
+import { db, doneMaintainRoutine, type Routine } from "./db";
 
 // Field names match the `name` attributes of the routine form inputs.
 const RoutineFormSchema = v.object({
@@ -52,7 +52,7 @@ const daysBetweenDate = (date1: Date, date2: Date): number => {
   const date1Time = date1.getTime();
   const date2Time = date2.getTime();
   return Math.round((date2Time - date1Time) / 84_400_000);
-}
+};
 
 export default function App() {
   const routines = createMemo(() => db.routines.getAll());
@@ -118,7 +118,7 @@ export default function App() {
   const logSet = async (routine: Routine) => {
     const updated = db.routines.update(routine.id, (r) => {
       r.achieved += 1;
-      r.lastSet = new Date().toISOString().slice(0,19)
+      r.lastSet = new Date().toISOString().slice(0, 19);
       return r;
     });
 
@@ -142,6 +142,7 @@ export default function App() {
 
     void refresh(routines);
   };
+
   const removeRoutine = (id: string) => {
     db.routines.delete(id);
     void refresh(routines);
@@ -197,59 +198,12 @@ export default function App() {
           }
         >
           {(routine) => (
-            <>
-              <article
-                class="card bg-base-200 shadow border border-base-300 cursor-pointer hover:bg-base-100 overflow-hidden"
-                style={{ "anchor-name": `--anchor-${routine.id}` }}
-                onClick={() =>
-                  document
-                    .getElementById(`popover-${routine.id}`)
-                    ?.showPopover()
-                }
-              >
-                <div class="card-body flex-row p-0 divide-x divide-base-300">
-                  <h2 class="grow p-(--card-p,1.5rem) font-bold">
-                    {routine.name}
-                  </h2>
-                  <div class="grow  p-(--card-p,1.5rem)">
-                    <p style={{ margin: "0" }}>
-                      Achieved : {routine.achieved} Sets
-                    </p>
-                    <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
-                    <progress
-                      class="progress progress-secondary h-1"
-                      value={(routine.achieved / routine.goal) * 100}
-                      max="100"
-                    />
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void logSet(routine);
-                  }}
-                  class="btn btn-primary w-full rounded-t-none"
-                >
-                  LOG SET
-                </button>
-              </article>
-              <ul
-                class="dropdown bg-base-200 shadow menu dropdown-end w-52"
-                popover
-                id={`popover-${routine.id}`}
-                // oxlint-disable-next-line solid/style-prop
-                style={{ "position-anchor": `--anchor-${routine.id}` }}
-              >
-                <li>
-                  <button onClick={() => updateRoutine(routine)}>Edit</button>
-                </li>
-                <li>
-                  <button onClick={() => removeRoutine(routine.id)}>
-                    Delete
-                  </button>
-                </li>
-              </ul>
-            </>
+            <ActiveRoutine
+              routine={routine}
+              onUpdateClick={() => updateRoutine(routine)}
+              onDeleteClick={() => removeRoutine(routine.id)}
+              onSetLog={() => void logSet(routine)}
+            />
           )}
         </For>
         <div class="fab">
@@ -281,81 +235,14 @@ export default function App() {
               </span>
             </h2>
             <For each={maintainRoutines}>
-              {(routine) => {
-                const doneToday = (): boolean => {
-                  if (!routine.lastSet) return false
-                  return routine.lastSet.slice(0, 10) === new Date().toISOString().slice(0, 10);
-                };
-                const lastDone = (): string => {
-                  if (!routine.lastSet) return ""
-                  const difference = daysBetweenDate(new Date(routine.lastSet), new Date());
-                  if (difference === 0) return "Last done today.";
-                  if (difference === 1) return "Last done yesterday.";
-                  return `Last done ${difference} ago.`
-                }
-                return (
-                  <>
-                    <article
-                      class={["card bg-base-200 shadow border border-base-300 cursor-pointer overflow-hidden", !doneToday() && "hover:bg-base-100"]}
-                      style={{ "anchor-name": `--anchor-${routine.id}` }}
-                      onClick={() =>
-                        document
-                          .getElementById(`popover-${routine.id}`)
-                          ?.showPopover()
-                      }
-                    >
-                      <div class="card-body flex-row p-0 divide-x divide-base-300">
-                        <div class="grow p-(--card-p,1.5rem)">
-                          <h2 class="font-bold">
-                            {routine.name}
-                          </h2>
-                          <p class="text-xs text-success font-medium mt-2">{doneToday() ? "✓ Done Today" : "Due Today"}</p>
-                        </div>
-                        <div class="grow  p-(--card-p,1.5rem)">
-                          <p style={{ margin: "0" }}>
-                            Achieved : {routine.achieved} Sets
-                          </p>
-                          <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
-                          <progress
-                            class="progress progress-secondary h-1"
-                            value={(routine.achieved / routine.goal) * 100}
-                            max="100"
-                          />
-                          <p class="text-xs text-current/70 mt-4">{lastDone()}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const result = doneMaintainRoutine(routine);
-                          notify(result.message);
-                          refresh(routines);
-                        }}
-                        disabled={doneToday()}
-                        class="btn btn-success w-full rounded-t-none"
-                      >
-                        {doneToday() ? "✓ " : ""}DONE TODAY
-                      </button>
-                    </article>
-                    <ul
-                      class="dropdown bg-base-200 shadow menu dropdown-end w-52"
-                      popover
-                      id={`popover-${routine.id}`}
-                      // oxlint-disable-next-line
-                      style={{ "position-anchor": `--anchor-${routine.id}` }}
-                    >
-                      <li>
-                        <button onClick={() => updateRoutine(routine)}>Edit</button>
-                      </li>
-                      <li>
-                        <button onClick={() => removeRoutine(routine.id)}>
-                          Delete
-                        </button>
-                      </li>
-                    </ul>
-                  </>
-                )
-              }}
+              {(routine) => (
+                <MaintainRoutine
+                  routine={routine}
+                  refresh={() => refresh(routines)}
+                  onUpdateClick={() => updateRoutine(routine)}
+                  onDeleteClick={() => removeRoutine(routine.id)}
+                />
+              )}
             </For>
           </>
         </Show>
@@ -369,7 +256,7 @@ export default function App() {
                 aria-label="Close"
                 rel="prev"
                 onClick={() => newRoutineRef.close()}
-                />
+              />
               <p>
                 <strong>Add New Workout Routine</strong>
               </p>
@@ -465,3 +352,148 @@ export default function App() {
     </>
   );
 }
+
+const MaintainRoutine: Component<{
+  routine: Routine;
+  refresh: () => void;
+  onUpdateClick: () => void;
+  onDeleteClick: () => void;
+}> = (props) => {
+  const doneToday = (): boolean => {
+    if (!props.routine.lastSet) return false;
+    return (
+      props.routine.lastSet.slice(0, 10) ===
+      new Date().toISOString().slice(0, 10)
+    );
+  };
+  const lastDone = (): string => {
+    if (!props.routine.lastSet) return "";
+    const difference = daysBetweenDate(
+      new Date(props.routine.lastSet),
+      new Date(),
+    );
+    if (difference === 0) return "Last done today.";
+    if (difference === 1) return "Last done yesterday.";
+    return `Last done ${difference} ago.`;
+  };
+  return (
+    <>
+      <article
+        class={[
+          "card bg-base-200 shadow border border-base-300 cursor-pointer overflow-hidden",
+          !doneToday() && "hover:bg-base-100",
+        ]}
+        style={{ "anchor-name": `--anchor-${props.routine.id}` }}
+        onClick={() =>
+          document.getElementById(`popover-${props.routine.id}`)?.showPopover()
+        }
+      >
+        <div class="card-body flex-row p-0 divide-x divide-base-300">
+          <div class="grow p-(--card-p,1.5rem)">
+            <h2 class="font-bold">{props.routine.name}</h2>
+            <p class="text-xs text-success font-medium mt-2">
+              {doneToday() ? "✓ Done Today" : "Due Today"}
+            </p>
+          </div>
+          <div class="grow  p-(--card-p,1.5rem)">
+            <p style={{ margin: "0" }}>
+              Achieved : {props.routine.achieved} Sets
+            </p>
+            <p style={{ margin: "0" }}>Goal : {props.routine.goal} Sets</p>
+            <progress
+              class="progress progress-secondary h-1"
+              value={(props.routine.achieved / props.routine.goal) * 100}
+              max="100"
+            />
+            <p class="text-xs text-current/70 mt-4">{lastDone()}</p>
+          </div>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            const result = doneMaintainRoutine(props.routine);
+            notify(result.message);
+            props.refresh();
+          }}
+          disabled={doneToday()}
+          class="btn btn-success w-full rounded-t-none"
+        >
+          {doneToday() ? "✓ " : ""}DONE TODAY
+        </button>
+      </article>
+      <ul
+        class="dropdown bg-base-200 shadow menu dropdown-end w-52"
+        popover
+        id={`popover-${props.routine.id}`}
+        // oxlint-disable-next-line
+        style={{ "position-anchor": `--anchor-${props.routine.id}` }}
+      >
+        <li>
+          <button onClick={() => props.onUpdateClick()}>Edit</button>
+        </li>
+        <li>
+          <button onClick={() => props.onDeleteClick()}>Delete</button>
+        </li>
+      </ul>
+    </>
+  );
+};
+
+const ActiveRoutine: Component<{
+  routine: Routine;
+  onUpdateClick: () => void;
+  onDeleteClick: () => void;
+  onSetLog: () => void;
+}> = (props) => {
+  return (
+    <>
+      <article
+        class="card bg-base-200 shadow border border-base-300 cursor-pointer hover:bg-base-100 overflow-hidden"
+        style={{ "anchor-name": `--anchor-${props.routine.id}` }}
+        onClick={() =>
+          document.getElementById(`popover-${props.routine.id}`)?.showPopover()
+        }
+      >
+        <div class="card-body flex-row p-0 divide-x divide-base-300">
+          <h2 class="grow p-(--card-p,1.5rem) font-bold">
+            {props.routine.name}
+          </h2>
+          <div class="grow  p-(--card-p,1.5rem)">
+            <p style={{ margin: "0" }}>
+              Achieved : {props.routine.achieved} Sets
+            </p>
+            <p style={{ margin: "0" }}>Goal : {props.routine.goal} Sets</p>
+            <progress
+              class="progress progress-secondary h-1"
+              value={(props.routine.achieved / props.routine.goal) * 100}
+              max="100"
+            />
+          </div>
+        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            props.onSetLog();
+          }}
+          class="btn btn-primary w-full rounded-t-none"
+        >
+          LOG SET
+        </button>
+      </article>
+      <ul
+        class="dropdown bg-base-200 shadow menu dropdown-end w-52"
+        popover
+        id={`popover-${props.routine.id}`}
+        // oxlint-disable-next-line solid/style-prop
+        style={{ "position-anchor": `--anchor-${props.routine.id}` }}
+      >
+        <li>
+          <button onClick={() => props.onUpdateClick()}>Edit</button>
+        </li>
+        <li>
+          <button onClick={() => props.onDeleteClick()}>Delete</button>
+        </li>
+      </ul>
+    </>
+  );
+};
