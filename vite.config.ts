@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import solid from '@solidjs/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
-import netlify from "@netlify/vite-plugin"
 
 export default defineConfig({
   // Turnkey client mode: no index.html and no mount file — the plugin generates
@@ -10,11 +9,6 @@ export default defineConfig({
   plugins: [
     solid({ start: true, diagnostics: true }),
     tailwindcss(),
-    netlify({
-      build: {
-        enabled: true
-      }
-    })
   ],
   server: {
     port: 3000,
