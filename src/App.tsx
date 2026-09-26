@@ -10,6 +10,7 @@ import {
 import * as v from "valibot";
 import "./App.css";
 import { db, doneMaintainRoutine, type Routine } from "./db";
+import { Toaster } from "./context/Toaster";
 
 // Field names match the `name` attributes of the routine form inputs.
 const RoutineFormSchema = v.object({
@@ -177,6 +178,7 @@ export default function App() {
 
   return (
     <>
+      <Toaster />
       <main class="p-4 flex flex-col gap-4">
         <h1 class="text-xl font-bold">YOUR ROUTINE</h1>
         <For
