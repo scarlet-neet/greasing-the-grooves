@@ -30,6 +30,29 @@ const RoutineFormSchema = v.object({
   ),
 });
 
+/**
+ *
+ * @param {Date} date1 Date object to compare, prefrelaby before the date2 param
+ * @param {Date} date2 Date object to compare, prefrelaby after the date1 param
+ *
+ * @returns {number} days different between date1 and date2
+ *
+ * @example
+ * ```
+ *    const difference = daysBetweenDate(new Date(2000, 1, 3), new Date(2000, 1, 9));
+ *
+ *    console.log(difference) // expected result : 6
+ * ```
+ *
+ * Utilities function to get the days difference between 2 date object
+ *
+ */
+const daysBetweenDate = (date1: Date, date2: Date): number => {
+  const date1Time = date1.getTime();
+  const date2Time = date2.getTime();
+  return Math.round((date2Time - date1Time) / 84_400_000);
+}
+
 export default function App() {
   const routines = createMemo(() => db.routines.getAll());
 
@@ -174,7 +197,7 @@ export default function App() {
           {(routine) => (
             <>
               <article
-                class="card bg-base-200 shadow border border-base-300 card-sm cursor-pointer hover:bg-base-100 overflow-hidden"
+                class="card bg-base-200 shadow border border-base-300 cursor-pointer hover:bg-base-100 overflow-hidden"
                 style={{ "anchor-name": `--anchor-${routine.id}` }}
                 onClick={() =>
                   document
@@ -256,61 +279,76 @@ export default function App() {
               </span>
             </h2>
             <For each={maintainRoutines}>
-              {(routine) => (
-                <>
-                  <article
-                    class="card bg-base-200 shadow border border-base-300 card-sm cursor-pointer hover:bg-base-100 overflow-hidden"
-                    style={{ "anchor-name": `--anchor-${routine.id}` }}
-                    onClick={() =>
-                      document
-                        .getElementById(`popover-${routine.id}`)
-                        ?.showPopover()
-                    }
-                  >
-                    <div class="card-body flex-row p-0 divide-x divide-base-300">
-                      <h2 class="grow p-(--card-p,1.5rem) font-bold">
-                        {routine.name}
-                      </h2>
-                      <div class="grow  p-(--card-p,1.5rem)">
-                        <p style={{ margin: "0" }}>
-                          Achieved : {routine.achieved} Sets
-                        </p>
-                        <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
-                        <progress
-                          class="progress progress-secondary h-1"
-                          value={(routine.achieved / routine.goal) * 100}
-                          max="100"
-                        />
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void logSet(routine);
-                      }}
-                      class="btn btn-success w-full rounded-t-none"
+              {(routine) => {
+                const doneToday = () => routine.lastSet === toIsoDate(new Date());
+                const lastDone = (): string => {
+                  if (!routine.lastSet) return ""
+                  const difference = daysBetweenDate(new Date(routine.lastSet), new Date());
+                  if (difference === 0) return "Last done today.";
+                  if (difference === 1) return "Last done yesterday.";
+                  return `Last done ${difference} ago.`
+                }
+                return (
+                  <>
+                    <article
+                      class={["card bg-base-200 shadow border border-base-300 cursor-pointer overflow-hidden", !doneToday() && "hover:bg-base-100"]}
+                      style={{ "anchor-name": `--anchor-${routine.id}` }}
+                      onClick={() =>
+                        document
+                          .getElementById(`popover-${routine.id}`)
+                          ?.showPopover()
+                      }
                     >
-                      DONE TODAY
-                    </button>
-                  </article>
-                  <ul
-                    class="dropdown bg-base-200 shadow menu dropdown-end w-52"
-                    popover
-                    id={`popover-${routine.id}`}
-                    // oxlint-disable-next-line
-                    style={{ "position-anchor": `--anchor-${routine.id}` }}
-                  >
-                    <li>
-                      <button onClick={() => updateRoutine(routine)}>Edit</button>
-                    </li>
-                    <li>
-                      <button onClick={() => removeRoutine(routine.id)}>
-                        Delete
+                      <div class="card-body flex-row p-0 divide-x divide-base-300">
+                        <div class="grow p-(--card-p,1.5rem)">
+                          <h2 class="font-bold">
+                            {routine.name}
+                          </h2>
+                          <p class="text-xs text-success font-medium mt-2">{doneToday() ? "✓ Done Today" : "Due Today"}</p>
+                        </div>
+                        <div class="grow  p-(--card-p,1.5rem)">
+                          <p style={{ margin: "0" }}>
+                            Achieved : {routine.achieved} Sets
+                          </p>
+                          <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
+                          <progress
+                            class="progress progress-secondary h-1"
+                            value={(routine.achieved / routine.goal) * 100}
+                            max="100"
+                          />
+                          <p class="text-xs text-current/70 mt-4">{lastDone()}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void logSet(routine);
+                        }}
+                        disabled={doneToday()}
+                        class="btn btn-success w-full rounded-t-none"
+                      >
+                        DONE TODAY
                       </button>
-                    </li>
-                  </ul>
-                </>
-              )}
+                    </article>
+                    <ul
+                      class="dropdown bg-base-200 shadow menu dropdown-end w-52"
+                      popover
+                      id={`popover-${routine.id}`}
+                      // oxlint-disable-next-line
+                      style={{ "position-anchor": `--anchor-${routine.id}` }}
+                    >
+                      <li>
+                        <button onClick={() => updateRoutine(routine)}>Edit</button>
+                      </li>
+                      <li>
+                        <button onClick={() => removeRoutine(routine.id)}>
+                          Delete
+                        </button>
+                      </li>
+                    </ul>
+                  </>
+                )
+              }}
             </For>
           </>
         </Show>
