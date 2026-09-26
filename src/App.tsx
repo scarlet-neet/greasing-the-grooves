@@ -10,7 +10,6 @@ import {
 import * as v from "valibot";
 import "./App.css";
 import { db, type Routine } from "./db";
-import { toIsoDate } from "./lib/format";
 
 // Field names match the `name` attributes of the routine form inputs.
 const RoutineFormSchema = v.object({
@@ -280,7 +279,10 @@ export default function App() {
             </h2>
             <For each={maintainRoutines}>
               {(routine) => {
-                const doneToday = () => routine.lastSet === toIsoDate(new Date());
+                const doneToday = (): boolean => {
+                  if (!routine.lastSet) return false
+                  return routine.lastSet.slice(0, 10) === new Date().toISOString().slice(0, 10);
+                };
                 const lastDone = (): string => {
                   if (!routine.lastSet) return ""
                   const difference = daysBetweenDate(new Date(routine.lastSet), new Date());
