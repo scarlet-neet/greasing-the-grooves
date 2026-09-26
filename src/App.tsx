@@ -70,15 +70,14 @@ export default function App() {
 
   let confirmPromise: ((confirmed: boolean) => void) | undefined;
   const logSet = async (routine: Routine) => {
-
-    let goalReached = false
+    let goalReached = false;
     db.routines.update(routine.id, (r) => {
       r.achieved += 1;
-      if (r.achieved >= r.goal) goalReached = true
+      if (r.achieved >= r.goal) goalReached = true;
       return r;
     });
 
-    refresh(routines)
+    refresh(routines);
 
     if (goalReached) {
       const { promise, resolve } = Promise.withResolvers<boolean>();
@@ -90,10 +89,10 @@ export default function App() {
       confirmPromise = undefined;
       if (!confirmed) return;
 
-      db.routines.update(routine.id, r => {
-        r.state = 'maintain';
-        return r
-      })
+      db.routines.update(routine.id, (r) => {
+        r.state = "maintain";
+        return r;
+      });
     }
 
     refresh(routines);
@@ -124,6 +123,10 @@ export default function App() {
 
   const activeRoutines = createProjection(
     () => routines().filter((routine) => routine.state === "active"),
+    [],
+  );
+  const maintainRoutines = createProjection(
+    () => routines().filter((routine) => routine.state === "maintain"),
     [],
   );
 
@@ -220,15 +223,72 @@ export default function App() {
             </svg>
           </button>
         </div>
-        <h2 class="text-xl font-bold">
-          MAINTAIN{" "}
-          <span class="badge badge-neutral ms-4 badge-sm align-middle">
-            ONCE PER DAY
-          </span>
-        </h2>
-        <button class="btn" onClick={() => goalSetMetDialog.showModal()}>
-          Open Alert
-        </button>
+        <Show when={maintainRoutines.length}>
+          <>
+            <h2 class="text-xl font-bold">
+              MAINTAIN{" "}
+              <span class="badge badge-neutral ms-4 badge-sm align-middle">
+                ONCE PER DAY
+              </span>
+            </h2>
+            <For each={maintainRoutines}>
+              {(routine) => (
+                <>
+                  <article
+                    class="card bg-base-200 shadow border border-base-300 card-sm cursor-pointer hover:bg-base-100 overflow-hidden"
+                    style={{ "anchor-name": `--anchor-${routine.id}` }}
+                    onClick={() =>
+                      document
+                        .getElementById(`popover-${routine.id}`)
+                        ?.showPopover()
+                    }
+                  >
+                    <div class="card-body flex-row p-0 divide-x divide-base-300">
+                      <h2 class="grow p-(--card-p,1.5rem) font-bold">
+                        {routine.name}
+                      </h2>
+                      <div class="grow  p-(--card-p,1.5rem)">
+                        <p style={{ margin: "0" }}>
+                          Achieved : {routine.achieved} Sets
+                        </p>
+                        <p style={{ margin: "0" }}>Goal : {routine.goal} Sets</p>
+                        <progress
+                          class="progress progress-secondary h-1"
+                          value={(routine.achieved / routine.goal) * 100}
+                          max="100"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        logSet(routine);
+                      }}
+                      class="btn btn-success w-full rounded-t-none"
+                    >
+                      DONE TODAY
+                    </button>
+                  </article>
+                  <ul
+                    class="dropdown bg-base-200 shadow menu dropdown-end w-52"
+                    popover
+                    id={`popover-${routine.id}`}
+                    style={{ "position-anchor": `--anchor-${routine.id}` }}
+                  >
+                    <li>
+                      <button onClick={() => updateRoutine(routine)}>Edit</button>
+                    </li>
+                    <li>
+                      <button onClick={() => removeRoutine(routine.id)}>
+                        Delete
+                      </button>
+                    </li>
+                  </ul>
+                </>
+              )}
+            </For>
+          </>
+        </Show>
       </main>
       <div>
         <dialog ref={newRoutineRef} class="modal">
